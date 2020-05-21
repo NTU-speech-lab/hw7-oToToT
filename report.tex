@@ -1,0 +1,98 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[left=1.2cm, right=1.5cm, top=2cm, bottom=2cm]{geometry}
+\usepackage{xeCJK}
+\usepackage{indentfirst}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{verbatim}
+\usepackage{fancyhdr}
+% \usepackage[compact]{titlesec}
+\usepackage[usenames,dvipsnames]{xcolor}
+
+\setCJKmainfont{NotoSansCJKtc-Thin}
+\setmonofont{Consolas}
+
+\definecolor{CodeGreen}{rgb}{0,0.6,0}
+\definecolor{CodeGray}{rgb}{0.5,0.5,0.5}
+\definecolor{CodeMauve}{rgb}{0.58,0,0.82}
+\lstset{
+    basicstyle = \ttfamily\footnotesize, 
+    breakatwhitespace = false,
+    breaklines = true,         
+    commentstyle = \color{CodeGreen}\bfseries,
+    extendedchars = false,
+    keepspaces=true,
+    keywordstyle=\color{blue}\bfseries, % keyword style
+    language = C++,                     % the language of code
+    otherkeywords={string},
+    numbers=left,
+    numbersep=5pt,
+    numberstyle=\tiny\color{CodeGray},
+    rulecolor=\color{black},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    stepnumber=1,       
+    stringstyle=\color{CodeMauve},        % string literal style
+    tabsize=2,
+}
+% from https://blog.csdn.net/RobertChenGuangzhi/article/details/45126785
+
+\title{Machine Learning 2020 - Homework 7 Report}
+\author{學號：b08902100, 系級：資工一, 姓名：江昱勳}
+\date{}
+
+\begin{document}
+\pagestyle{fancy}
+\fancyhead[L]{Machine Learning 2020 - Homework 7}
+\fancyhead[R]{Author: b08902100 江昱勳}
+
+\maketitle
+
+% \verbatiminput{HW2_S.txt}
+% \lstinputlisting{HW2.cpp}
+
+\begin{enumerate}
+\item 請從 Network Pruning/Quantization/Knowledge Distillation/Low Rank Approximation/Design Architecture  選擇兩者實做並詳述你的方法，將同一個大 model 壓縮至接近相同的參數量，並紀錄其 accuracy。
+
+這裡我搭建了兩個模型。
+
+第一個模型是想實驗模型設計的部份(把模型變瘦但變深)，總共有13層的CNN並接上3層的全連接層，每一層CNN層都是由一組Depthwise Convolution + Pointwise Convolution構成，前5層的活化函數皆採用ReLU6，後面8層則採用swish，而僅只有前4層有使用max pooling，channel的部份分別為16,32,32,64,64,64,64,128,128,128,128,128,128,128，最後全連接層的部分則為160,160,11，總共有186123個參數，不過此model實際訓練的時候似乎訓練不起來，有可能是過深的原因，訓練了200個epoch後在validation上的accuracy仍只有0.205539，與其在training set上的accuracy差不多。
+
+第二個模型主要是嘗試pruning的部份，原本的模型總共有8層CNN並接上3層的全連接層，每一層CNN層都是由一組Depthwise Convolution + Pointwise Convolution構成，前5層的活化函數皆採用ReLU6，後面3層則採用swish，而僅只有前4層有使用max pooling，channel的部份分別為24,48,96,96,192,192,192,192，最後全連接層的部分則為160,160,11，該模型在validation上的正確率為0.846064。
+使用0.95的pruning rate後參數減少為186750，而validation的正確率也減少至0.834694。
+
+\item {[Knowledge Distillation]} 請嘗試比較以下 validation accuracy (兩個 Teacher Net 由助教提供)以及 student 的總參數量以及架構，並嘗試解釋為甚麼有這樣的結果。你的 Student Net 的參數量必須要小於 Teacher Net 的參數量。
+
+\begin{enumerate}
+    \item[x.] Teacher net architecture and \# of parameters: torchvision's ResNet18, with 11182155 parameters.
+    \item[y.] Student net architecture and \# of parameters: 144389
+    \item[a.] Teacher net (ResNet18) from scratch: 80.09\%
+    \item[b.] Teacher net (ResNet18) ImageNet pretrained \& fine-tune: 88.41\%
+    \item[c.] Your student net from scratch: 78.8630 \%
+    \item[d.] Your student net KD from (a.): 79.1254 \%
+    \item[e.] Your student net KD from (b.): 80.6414 \%
+\end{enumerate}
+
+我的student net模型總共有9層CNN並接上3層的全連接層，每一層CNN層都是由一組Depthwise Convolution + Pointwise Convolution構成，前5層的活化函數皆採用ReLU6，後面4層則採用swish，而僅只有前4層有使用max pooling，channel的部份分別為19,38,76,76,76,152,152,152,152，最後全連接層的部分則為128,128,11。
+
+以上訓練結果皆為訓練200 epoch後的結果，可以發現原先train from scratch即可達到78\%左右的準確率，而因此讓他跟80\%的模型學習則可以讓他在200 epoch時就幾乎將teacher學會的東西學走達到79\%的準確率，而若是讓他與更加厲害的老師學習則可以看到在200 epoch時就能學到80\%的準確率，這甚至超過了train from scratch的ResNet18，因此可以看到老師的準確率會影響模型學習的成果，如果與準確率高的模型學習可以較快達到一定的準確率。
+
+\item {[Network Pruning]} 請使用兩種以上的 pruning rate 畫出 X 軸為參數量，Y 軸為 validation accuracy 的折線圖。你的圖上應該會有兩條以上的折線。
+
+我分別使用了0.95的pruning rate與0.85的pruning rate做實驗，以下是參數量對validation accuracy的折線圖。
+
+\includegraphics[width=.85\textwidth]{arg.pdf}
+
+此外我也把訓練過程記錄下來了，我這裡是以每200個epoch就prune一次，以下是訓練時的validation accuracy與training accuracy，以及loss的部份。
+
+\includegraphics[width=.85\textwidth]{acc.pdf}
+
+\includegraphics[width=.85\textwidth]{loss.pdf}
+
+
+\end{enumerate}
+
+\end{document}

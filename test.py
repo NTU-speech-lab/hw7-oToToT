@@ -455,7 +455,7 @@ if TRAIN_TEACHER_NET:
 
 
 teacher_net = TeacherNet_oToToT().cuda()
-teacher_net.load_state_dict(torch.load('teacher_model.bin'))
+# teacher_net.load_state_dict(torch.load('teacher_model.bin'))
 
 
 # In[ ]:
@@ -656,7 +656,7 @@ def loss_fn_kd(outputs, labels, teacher_outputs, T=20, alpha=0.5):
 
 student_net_base = 9.5
 student_net = StudentNet(student_net_base).cuda()
-# student_net.load_state_dict(torch.load('student_model.bin'))
+student_net.load_state_dict(torch.load('student_model.bin'))
 
 optimizer = torch.optim.Adam(student_net.parameters(), lr=1e-3)
 

@@ -656,7 +656,7 @@ def loss_fn_kd(outputs, labels, teacher_outputs, T=20, alpha=0.5):
 
 student_net_base = 9.5
 student_net = StudentNet(student_net_base).cuda()
-student_net.load_state_dict(torch.load('student_model.bin'))
+# student_net.load_state_dict(torch.load('student_model.bin'))
 
 optimizer = torch.optim.Adam(student_net.parameters(), lr=1e-3)
 
@@ -798,7 +798,7 @@ def network_slimming(old_model, new_model):
 
 
 student_net = StudentNet(student_net_base).cuda()
-student_net.load_state_dict(torch.load('student_model.bin'))
+# student_net.load_state_dict(torch.load('student_model.bin'))
 
 now_width_mult = 1
 for i in range(0):
@@ -892,7 +892,7 @@ if False:
 
 
 student_net = StudentNet(student_net_base).cuda()
-student_net.load_state_dict(decode('model.bin'))
+student_net.load_state_dict(decode16('model.bin'))
 num_epoch = 0
 
 # TeacherNet永遠都是Eval mode.
